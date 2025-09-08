@@ -170,4 +170,4 @@ We welcome contributions! Please feel free to submit a Pull Request. For major c
 
 ---
 
-**Made with by Anshul Sharma**
+**Made by Anshul Sharma**
