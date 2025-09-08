@@ -167,16 +167,7 @@ matrix/
 
 We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
-## License
-
-This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-If you have any questions or need help, please:
-- Open an issue on GitHub
-- Contact us at support@matrix-career.com
 
 ---
 
-**Made with ❤️ by Anshul Sharma**
+**Made with by Anshul Sharma**
