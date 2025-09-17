@@ -23,7 +23,7 @@ Built with modern web technologies and powered by Google's Gemini AI, Matrix pro
 - **🔐 Secure Authentication**: Built-in user management with Clerk authentication
 - **📱 Responsive Design**: Fully responsive interface that works seamlessly across all devices
 - **🌙 Dark Mode Support**: Modern UI with dark/light theme switching
-- **📄 PDF Export**: Download your resumes as professional PDF documents
+- **📄 PDF Export**: Download your resume as professional PDF documents
 
 ## Tech Stack
 
