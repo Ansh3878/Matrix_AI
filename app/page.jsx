@@ -1,3 +1,5 @@
+
+import React from "react";
 import HeroSection from "@/components/hero";
 import { features } from "@/data/features";
 import { Card, CardContent} from "@/components/ui/card";
@@ -11,12 +13,45 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 
+import Galaxy from '@/components/Galaxy';
+
 
 
 export default function Home() {
-  return <div>
-        <div className="grid-background"></div>
+  return (
   
+  
+  <div>
+    
+
+
+        {/* <div className="grid-background"></div> */}
+
+
+    {/* <div className="Background-Beams">
+    
+      <BackgroundBeams />
+    </div> */}
+
+
+
+
+<div style={{
+    position: 'fixed',
+    top: 0, 
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    zIndex: -1,
+    // Don't set pointerEvents here
+    overflow: 'hidden'
+  }}>
+  <Galaxy />
+</div>
+
+
+
+
      {/* Hero Section */}
   <HeroSection />
     
@@ -98,6 +133,7 @@ export default function Home() {
         </div>
       </section>
 
+       {/* Testimonial Section */}
       <section className="w-full py-12 md:py-24 bg-muted/50">
         <div className="container mx-auto px-4 md:px-6">
           <h2 className="text-3xl font-bold text-center mb-12">
@@ -147,6 +183,7 @@ export default function Home() {
         </div>
       </section>
 
+
        {/* FAQ Section */}
        <section className="w-full py-12 md:py-24">
         <div className="container mx-auto px-4 md:px-6">
@@ -175,7 +212,9 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
+    
       <section className="w-full">
+     
         <div className="mx-auto py-24 gradient rounded-lg">
           <div className="flex flex-col items-center justify-center space-y-4 text-center max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold tracking-tighter text-primary-foreground sm:text-4xl md:text-5xl">
@@ -194,10 +233,14 @@ export default function Home() {
                 Start Your Journey Today <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
+        
           </div>
         </div>
       </section>
 
-  </div>;
+      </div>
+  
+
+  );
      
 }

@@ -30,7 +30,6 @@ Built with modern web technologies and powered by Google's Gemini AI, Matrix pro
 ### Frontend
 - **Next.js 15.5.0** - React framework with App Router
 - **React 19.1.0** - UI library
-- **TypeScript** - Type-safe JavaScript
 - **Tailwind CSS 3.4.17** - Utility-first CSS framework
 - **shadcn/ui** - Modern component library
 - **Radix UI** - Accessible component primitives

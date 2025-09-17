@@ -97,7 +97,7 @@
     transform: rotateX(0deg) scale(1) translateY(40px);
   }
 
-  .grid-background {
+  /* .grid-background {
     position: fixed;
     top: 0;
     left: 0;
@@ -122,9 +122,27 @@
     width: 100%;
     height: 100%;
     background: radial-gradient(circle, transparent, rgba(0, 0, 0, 0.9));
+  } */
+
+  .Background-Beams {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; 
   }
-
-
+  
+  .Background-Beams::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  
+    
+  }
 
 
 }
