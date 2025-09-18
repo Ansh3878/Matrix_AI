@@ -17,7 +17,7 @@ Built with modern web technologies and powered by Google's Gemini AI, Matrix pro
 - **🤖 AI-Powered Resume Builder**: Create professional, ATS-optimized resumes with intelligent content suggestions and formatting
 - **📝 Smart Cover Letter Generator**: Generate personalized cover letters tailored to specific job applications
 - **🎯 Interview Preparation**: Practice with AI-generated technical questions specific to your industry and role
-- **📊 Performance Analytics**: Track your interview performance with detailed statistics and improvement recommendations
+- **📊 Performance Analytics**: Track your interview performance with detailed statistics and improvement recommendation
 - **🏢 Industry Insights**: Access real-time market data, salary ranges, and industry trends
 - **📈 Progress Tracking**: Monitor your career development journey with comprehensive analytics
 - **🔐 Secure Authentication**: Built-in user management with Clerk authentication
