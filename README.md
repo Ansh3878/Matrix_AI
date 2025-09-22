@@ -4,7 +4,7 @@ A comprehensive career development platform that leverages artificial intelligen
 
 ## Live Demo
 
-🚀 **[View Live Demo](https://your-demo-url.com)** *(Coming Soon)*
+🚀 **[View Live Demo](https://matrix-ai-psi.vercel.app/)** 
 
 ## About The Project
 
