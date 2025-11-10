@@ -1,5 +1,7 @@
 
 @tailwind base;
+
+@custom-variant dark (&:is(.dark *));
 @tailwind components;
 @tailwind utilities;
 
@@ -79,7 +81,6 @@
   }
 }
 
-
 /* ✅ WRAPPED ALL CUSTOM COMPONENT CSS IN A LAYER */
 @layer components {
   .hero-image-wrapper {
@@ -132,7 +133,7 @@
     height: 100%;
     z-index: -1; 
   }
-  
+
   .Background-Beams::before {
     content: "";
     position: absolute;
@@ -140,10 +141,28 @@
     left: 0;
     width: 100%;
     height: 100%;
-  
-    
-  }
 
+  }
 
 }
 
+@theme inline {
+  --animate-grid: grid 15s linear infinite;
+  @keyframes grid {
+  0% {
+    transform: translateY(-50%);
+    }
+  100% {
+    transform: translateY(0);
+    }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

@@ -2,11 +2,8 @@
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getGeminiClient } from "@/lib/gemini";
 import { revalidatePath } from "next/cache";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // Helper function to ensure user exists in database
 async function ensureUserExists(userId) {
@@ -129,12 +126,35 @@ export async function improveWithAI({ current, type }) {
   `;
 
   try {
+    const { model } = getGeminiClient();
     const result = await model.generateContent(prompt);
     const response = result.response;
     const improvedContent = response.text().trim();
     return improvedContent;
   } catch (error) {
     console.error("Error improving content:", error);
-    throw new Error("Failed to improve content");
+    
+    // Provide more helpful error messages
+    if (error.message?.includes("GEMINI_API_KEY")) {
+      throw new Error(
+        "Gemini API key is not configured. Please set GEMINI_API_KEY in your .env.local file. " +
+        "Get your API key from: https://makersuite.google.com/app/apikey"
+      );
+    }
+    
+    if (error.message?.includes("API_KEY_INVALID") || error.message?.includes("401")) {
+      throw new Error(
+        "Invalid Gemini API key. Please check your GEMINI_API_KEY in .env.local file."
+      );
+    }
+    
+    if (error.message?.includes("404") || error.message?.includes("not found") || error.message?.includes("not supported")) {
+      throw new Error(
+        "Gemini model not found. The model name may be incorrect or not available. " +
+        "Please check the model name in lib/gemini.js. Try using 'gemini-pro' instead."
+      );
+    }
+    
+    throw new Error(`Failed to improve content: ${error.message || "Unknown error"}`);
   }
 }

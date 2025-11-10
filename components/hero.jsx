@@ -5,6 +5,9 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+import { motion } from "motion/react";
+import { LinkPreview } from "@/components/ui/link-preview";
+
 const HeroSection = () => {
   const imageRef = useRef(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -48,11 +51,14 @@ const HeroSection = () => {
               Get Started
             </Button>
           </Link>
-          <Link href="/dashboard">
+        
             <Button size="lg" variant="outline" className="px-8">
-              Watch Demo
+            <LinkPreview url="https://www.youtube.com/embed/HuihDhJ5i9o?si=wD5bMl1qC4s98QdV" className="font-bold">
+            Watch Demo
+        </LinkPreview>
+             
             </Button>
-          </Link>
+        
         </div>
         <div className="hero-image-wrapper mt-5 md:mt-0">
           <div 

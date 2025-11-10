@@ -14,27 +14,13 @@ import Link from "next/link";
 
 
 import Galaxy from '@/components/Galaxy';
+import MatrixText from '@/components/MatrixText';
 
 
 
 export default function Home() {
   return (
-  
-  
   <div>
-    
-
-
-        {/* <div className="grid-background"></div> */}
-
-
-    {/* <div className="Background-Beams">
-    
-      <BackgroundBeams />
-    </div> */}
-
-
-
 
 <div style={{
     position: 'fixed',
