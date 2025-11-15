@@ -73,7 +73,7 @@ export default function CSTechNewsPage() {
 
   // Fetch CS Job News from NewsData.io
   // NOTE: You must create a .env.local file in the project root and add:
-  // NEXT_PUBLIC_NEWSDATA_API_KEY=pub_53727094692a42fea8c599d30886abda
+ 
   const fetchCsJobs = async () => {
     setCsJobsLoading(true)
     setCsJobsError(null)
