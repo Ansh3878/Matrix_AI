@@ -9,6 +9,7 @@ import {
   PenBox,
   GraduationCap,
   BriefcaseBusiness,
+  Newspaper,
 } from "lucide-react";
 import Link from "next/link";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
@@ -89,6 +90,15 @@ export default function Header() {
                     Job Search
                   </Link>
                 </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link href="/news-feed" className="flex items-center gap-2">
+                   <Newspaper className="h-4 w-4"/>
+                  
+                    Tech News
+                  </Link>
+                </DropdownMenuItem>
+
               </DropdownMenuContent>
             </DropdownMenu>
           </SignedIn>

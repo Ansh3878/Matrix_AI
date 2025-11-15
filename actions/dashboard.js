@@ -106,6 +106,9 @@ export async function getIndustryInsights() {
   if (!user) throw new Error("User not found");
 
   // If no insights exist, generate them
+  const now = new Date();
+  const nextRefreshAt = now.getTime() + 7 * 24 * 60 * 60 * 1000;
+
   if (!user.industryInsight) {
     const insights = await generateAIInsights(user.industry);
 
@@ -113,7 +116,25 @@ export async function getIndustryInsights() {
       data: {
         industry: user.industry,
         ...insights,
-        nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        lastUpdated: now,
+        nextUpdate: new Date(nextRefreshAt),
+      },
+    });
+
+    return industryInsight;
+  }
+
+  const shouldRefresh = user.industryInsight.nextUpdate <= now;
+
+  if (shouldRefresh) {
+    const insights = await generateAIInsights(user.industry);
+
+    const industryInsight = await db.industryInsight.update({
+      where: { industry: user.industry },
+      data: {
+        ...insights,
+        lastUpdated: now,
+        nextUpdate: new Date(nextRefreshAt),
       },
     });
 

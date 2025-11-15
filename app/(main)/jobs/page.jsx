@@ -70,9 +70,8 @@ export default function JobsPage() {
 		<div className="container mx-auto px-4 md:px-6 py-8 md:py-12">
 			<div className="space-y-6">
 				<div className="space-y-2">
-					<h1 className="text-2xl md:text-3xl font-bold text-zinc-100">
-						Discover Your Next Role
-					</h1>
+				<h1 className="text-6xl font-bold gradient-title">Discover Your Next Role</h1>
+		
 					<p className="text-zinc-400">
 						Search across multiple job sources with real-time results.
 					</p>
