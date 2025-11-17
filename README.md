@@ -1,97 +1,192 @@
 # Matrix — AI Career Companion
 
-Matrix is a Next.js 15 app that helps you navigate your career with AI. It brings together onboarding, an industry insights dashboard, resume building with AI improvements, AI-generated cover letters, interview practice with MCQ quizzes, job aggregation, and a curated CS/Tech News Feed.
+Matrix is a modern Next.js application that helps technologists manage and grow their careers using AI-powered tools. The project bundles onboarding, industry insights, resume and cover letter generation, interview practice, job aggregation, and a curated tech news feed into a single, developer-friendly interface.
+
+## Summary
+
+- Purpose: Help software and CS professionals discover jobs, practice interviews, and leverage AI to improve resumes and cover letters.
+- Current focus: development and stabilization. Recent migration: NewsData.io client was replaced by a secure server-side proxy to NewsAPI.org. This keeps API keys secret and centralizes error handling and caching.
 
 ## Features
-- Onboarding: capture `industry`, `subIndustry`, `bio`, `experience`, and `skills` to personalize recommendations.
-- Dashboard: AI industry insights (salary ranges, growth rate, demand level, top skills, market outlook, key trends, recommended skills) with weekly refresh via cron.
-- Resume Builder: author and save a resume; improve individual sections using Gemini with industry context.
-- AI Cover Letters: generate professional, markdown-formatted letters tailored to company, role, and your background.
-- Interview Practice: generate multiple-choice quizzes and store assessments with AI improvement tips on weak areas.
+
+- Onboarding: collect `industry`, `subIndustry`, `bio`, `experience`, and `skills` to personalize recommendations.
+- Dashboard: AI industry insights (salary ranges, growth, demand level, top skills, market outlook, recommended skills) refreshed by scheduled jobs.
+- Resume Builder: author, save, and improve resumes with AI assistance.
+- Cover Letters: generate professional, markdown-formatted letters tailored to role and company.
+- Interview Practice: generate multiple-choice quizzes and store assessments with AI improvement tips.
 - Jobs: aggregate roles from Remotive and JSearch with filtering, pagination, and remote toggles.
-- News Feed: CS/Tech news tabs for Hacker News trends, Dev.to CS articles, and CS job news from NewsData.io.
+- News Feed: Hacker News trends, Dev.to CS articles, and CS job market analysis (via NewsAPI.org proxy).
+
+## Notable Code Changes (recent)
+
+- `app/api/news-feed/route.js` — implemented a NewsAPI.org proxy (server-side GET handler, error handling, response shaping, and caching headers).
+- `app/(main)/news-feed/cs-tech-news/page.jsx` — updated to call internal `/api/news-feed` and render NewsAPI article fields (title, source, description, url, publishedAt, image).
 
 ## Tech Stack
-- Framework: `next@15.5`, `react@19.1`
-- Auth: `@clerk/nextjs`
-- Database/ORM: `PostgreSQL` + `Prisma`
-- AI: Google Gemini via `@google/generative-ai`
-- Jobs APIs: Remotive, JSearch (RapidAPI)
-- Background jobs: `inngest` cron, served at `app/api/inngest/route.js`
-- UI: Tailwind CSS + Radix UI + custom components
 
-## Architecture
-- App Router structure under `app/` with grouped layouts:
-  - Public: `app/page.jsx`, `app/(auth)/sign-in`, `app/(auth)/sign-up`
-  - Protected: `app/(main)/dashboard`, `resume`, `ai-cover-letter`, `interview`, `onboarding`, `jobs`, `news-feed`
-- Auth protection via Clerk middleware in `middleware.js` using `createRouteMatcher`.
-- Server actions in `actions/*` encapsulate DB and AI logic.
-- Prisma models in `prisma/schema.prisma`; client generated to `lib/generated/prisma`.
-- Inngest client at `lib/inngest/client.js` and weekly cron in `lib/inngest/function.js`.
-- API routes:
-  - `app/api/jobs/route.js`
-  - `app/api/inngest/route.js`
-  - `app/api/news-feed/route.js`
+- Framework: Next.js (App Router) + React
+- Styling: Tailwind CSS
+- Auth: Clerk (`@clerk/nextjs`)
+- Database: PostgreSQL + Prisma
+- AI: Google Gemini (configured in `lib/gemini.js`)
+- Background jobs: Inngest (`lib/inngest/*`)
 
-## Project Workflow
-- Sign Up/In: handled by Clerk; app-wide provider set in `app/layout.js`.
-- Onboarding: fill industry profile; data persists to `User` and links to `IndustryInsight`.
-- Dashboard: reads `IndustryInsight` for the user; if missing or stale, generates via Gemini and stores.
-- Resume: author content in a markdown editor; save via server action; improve sections via Gemini using industry context.
-- Cover Letters: submit role/company/job description; generate content via Gemini; CRUD list and view.
-- Interview: generate 10 MCQs based on industry and skills; after quiz, persist assessment and optional AI improvement tip.
-- Jobs: call jobs API to aggregate and normalize listings; filter by source, remote, location; paginate.
-- News Feed: three tabs — Hacker News trends, Dev.to CS articles, and CS job news via NewsData.io.
-- Weekly Refresh: Inngest cron regenerates `IndustryInsight` for tracked industries.
+## Important Paths
+
+- API proxy for NewsAPI: `app/api/news-feed/route.js`
+- CS Job News UI: `app/(main)/news-feed/cs-tech-news/page.jsx`
+- Jobs API: `app/api/jobs/route.js`
+- Inngest cron: `lib/inngest/function.js`
+- Prisma schema: `prisma/schema.prisma`
 
 ## Environment Variables
-Create `.env.local` in the project root and add:
+
+Create an `.env.local` file in the project root or set environment variables in your deployment environment. Keep secrets server-side; do NOT expose them as `NEXT_PUBLIC_*`.
+
 - `DATABASE_URL` — PostgreSQL connection string
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — Clerk frontend key
+- `CLERK_PUBLISHABLE_KEY` — Clerk frontend key
 - `CLERK_SECRET_KEY` — Clerk backend key
-- `GEMINI_API_KEY` — Google Generative AI API key
-- `GEMINI_MODEL` — optional, defaults to `gemini-2.5-flash`
-- `JSEARCH_API_KEY` — optional, enables JSearch aggregation in jobs API
-- `NEXT_PUBLIC_NEWSDATA_API_KEY` — required for CS Job News tab
+- `GEMINI_API_KEY` — Google Generative AI key
+- `GEMINI_MODEL` — optional
+- `JSEARCH_API_KEY` — optional; enables JSearch in jobs aggregation
+- `NEWSAPI_KEY` — required; NewsAPI.org key (server-only)
 
-## Scripts
-- `npm run dev` — start local dev server (Turbopack)
-- `npm run build` — build (Turbopack)
-- `npm start` — run production build
-- `npm run lint` — lint
-- `postinstall` — `prisma generate`
+Security note: `NEWSAPI_KEY` must remain server-side. The app calls NewsAPI.org from `app/api/news-feed/route.js` so the key is never exposed to the browser.
 
-## Database
-- Models: `User`, `Assessment`, `Resume`, `CoverLetter`, `IndustryInsight` with enums `DemandLevel`, `MarketOutlook`.
-- Initialize/migrate:
-  - `npx prisma migrate dev` — create and apply dev migration
-  - `npx prisma generate` — already run on postinstall
+## News Proxy: API Reference
 
-## API Endpoints
-- `GET /api/jobs`
-  - Query params: `q`, `page`, `perPage`, `location`, `remote`, `source`
-  - Combines Remotive and JSearch, normalizes fields, paginates, and filters
-- `GET|POST|PUT /api/inngest` — serves Inngest functions (weekly insights cron)
-- `POST /api/news-feed` — scaffold endpoint; returns `{ ok: true }`
+`GET /api/news-feed`
 
-## Key Paths
-- Auth provider: `app/layout.js:19`
-- Route protection: `middleware.js:4`
-- Gemini config: `lib/gemini.js:7`
-- Inngest client: `lib/inngest/client.js:3`
-- Inngest cron: `lib/inngest/function.js:5`
-- Jobs API: `app/api/jobs/route.js:4`
-- News Feed pages: `app/(main)/news-feed/cs-tech-news/page.jsx:1`, `app/(main)/news-feed/page.jsx:8`
-- Prisma schema: `prisma/schema.prisma:7`
+Query parameters:
 
-## Getting Started
-1. Clone and install dependencies: `npm install`
-2. Create `.env.local` with variables above
-3. Set up PostgreSQL and run `npx prisma migrate dev`
-4. Start dev server: `npm run dev`
+- `q` — optional search query string. If omitted, the proxy uses a default compound query targeting developer/software-engineer job-market coverage:
 
-## Notes
-- Clerk keys are required for authentication.
-- Without `JSEARCH_API_KEY`, jobs are fetched only from Remotive.
-- `NEXT_PUBLIC_NEWSDATA_API_KEY` is required for the CS Job News tab to load articles.
+```
+(developer OR "software engineer") AND (layoffs OR hiring OR "job market")
+```
+
+- `pageSize` — optional number of results (default `20`, capped at `50`).
+
+Response (200 OK):
+
+```json
+{
+  "totalResults": 123,
+  "articles": [
+    {
+      "source": "Source Name",
+      "author": "Author",
+      "title": "Article title",
+      "description": "Short description",
+      "url": "https://...",
+      "image": "https://...",
+      "publishedAt": "2025-11-17T...",
+      "content": "..."
+    }
+  ]
+}
+```
+
+Error responses include a helpful `error` field and status code (e.g. `502` when NewsAPI returns an error).
+
+Example queries:
+
+Browser:
+
+```
+http://localhost:3000/api/news-feed
+```
+
+Explicit compound query (encoded):
+
+```
+http://localhost:3000/api/news-feed?q=(developer%20OR%20%22software%20engineer%22)%20AND%20(layoffs%20OR%20hiring%20OR%20%22job%20market%22)&pageSize=10
+```
+
+Notes:
+
+- The proxy sets caching headers: `Cache-Control: public, s-maxage=300, stale-while-revalidate=600`. Adjust for production.
+- Consider adding `page` support and server-side persistent caching (Redis) for heavy traffic.
+
+## Running Locally (PowerShell)
+
+Install dependencies:
+
+```powershell
+npm install
+```
+
+Set environment variables (example):
+
+```powershell
+# $env:DATABASE_URL = "postgresql://user:pass@localhost:5432/db"
+# $env:NEWSAPI_KEY = "your_newsapi_key_here"
+```
+
+Start dev server:
+
+```powershell
+npm run dev
+```
+
+Open `http://localhost:3000` and navigate to the News Feed → CS Job News tab.
+
+## Testing the Proxy
+
+Simple curl (PowerShell):
+
+```powershell
+curl "http://localhost:3000/api/news-feed"
+```
+
+Compound query example:
+
+```powershell
+curl "http://localhost:3000/api/news-feed?q=(developer%20OR%20%5C%22software%20engineer%5C%22)%20AND%20(layoffs%20OR%20hiring%20OR%20%5C%22job%20market%5C%22)&pageSize=5"
+```
+
+If you receive a `500` error indicating the key isn't configured, ensure `NEWSAPI_KEY` is set and restart the dev server.
+
+## Development & Deployment Recommendations
+
+- Keep secrets out of the client bundle. Use server routes for any request that requires a secret key.
+- Implement server-side caching for rate-limited APIs (Redis, in-memory cache or file cache for short-lived projects).
+- Add pagination support (`page`) in `app/api/news-feed/route.js` if you want deeper result traversal.
+- Sanitize and validate incoming `q` strings for length to prevent abuse.
+
+## Git Commands (Review & Commit)
+
+Review changes:
+
+```powershell
+git status
+git diff -- app/api/news-feed/route.js "app/(main)/news-feed/cs-tech-news/page.jsx"
+```
+
+Commit work:
+
+```powershell
+git add app/api/news-feed/route.js "app/(main)/news-feed/cs-tech-news/page.jsx" README.md
+git commit -m "Use NewsAPI proxy for CS job news; update UI and README"
+```
+
+Revert a file to last committed state (if needed):
+
+```powershell
+git restore --source=HEAD -- app/api/news-feed/route.js
+```
+
+## Where to Next (suggestions)
+
+- Add pagination support to the news proxy and UI.
+- Implement server-side persistent caching to reduce API usage and improve latency.
+- Add UI features: article thumbnails, source filtering, and an option to view raw JSON for debugging.
+
+## Contributing
+
+- Open an issue to discuss major changes. Send PRs with clear descriptions and tests where applicable.
+
+---
+_README updated to reflect migration to NewsAPI.org and provide developer guidance._
+
 

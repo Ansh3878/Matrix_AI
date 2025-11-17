@@ -71,30 +71,23 @@ export default function CSTechNewsPage() {
     }
   }
 
-  // Fetch CS Job News from NewsData.io
-  // NOTE: You must create a .env.local file in the project root and add:
-  // NEXT_PUBLIC_NEWSDATA_API_KEY=pub_53727094692a42fea8c599d30886abda
+  // Fetch CS Job News via internal server API which proxies NewsAPI.org
+  // This keeps the API key on the server and avoids leaking it to the client.
   const fetchCsJobs = async () => {
     setCsJobsLoading(true)
     setCsJobsError(null)
-    
+
     try {
-      const apiKey = process.env.NEXT_PUBLIC_NEWSDATA_API_KEY
-      if (!apiKey) {
-        throw new Error("NewsData.io API key is not configured. Please add NEXT_PUBLIC_NEWSDATA_API_KEY to your .env.local file.")
-      }
-      
-      const response = await fetch(
-        `https://newsdata.io/api/1/news?apikey=${apiKey}&q=computer%20science%20AND%20job&language=en`
-      )
-      
+      // Use a combined query to target developer/software-engineer job-market articles
+      const combinedQuery = '(developer OR "software engineer") AND (layoffs OR hiring OR "job market")'
+      const response = await fetch(`/api/news-feed?q=${encodeURIComponent(combinedQuery)}&pageSize=20`)
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || "Failed to fetch CS job news")
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err?.error || err?.message || `Failed to fetch CS job news (${response.status})`)
       }
-      
+
       const data = await response.json()
-      setCsJobsData(data.results || [])
+      setCsJobsData(data.articles || [])
       setCsJobsFetched(true)
     } catch (error) {
       setCsJobsError(error.message || "Failed to fetch CS job news")
@@ -289,24 +282,23 @@ export default function CSTechNewsPage() {
                 </Alert>
               ) : (
                 csJobsData.map((article, index) => (
-                  <Card key={article.article_id || index}>
+                  <Card key={article.url || index}>
                     <CardHeader>
                       <CardTitle>{article.title || "No title"}</CardTitle>
                       <CardDescription>
-                        {article.source_name || "Unknown source"}
-                        {article.pubDate && ` • ${new Date(article.pubDate).toLocaleDateString()}`}
-                        {article.category && ` • ${article.category.join(", ")}`}
+                        {article.source || "Unknown source"}
+                        {article.publishedAt && ` • ${new Date(article.publishedAt).toLocaleDateString()}`}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground line-clamp-3">
-                        {article.description || article.content?.substring(0, 200) || "No description available"}...
+                        {article.description || (article.content && article.content.substring(0, 200)) || "No description available"}...
                       </p>
                     </CardContent>
-                    {article.link && (
+                    {article.url && (
                       <CardFooter>
                         <a
-                          href={article.link}
+                          href={article.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:underline"
