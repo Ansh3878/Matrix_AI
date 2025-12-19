@@ -187,6 +187,6 @@ git restore --source=HEAD -- app/api/news-feed/route.js
 - Open an issue to discuss major changes. Send PRs with clear descriptions and tests where applicable.
 
 ---
-_README updated to reflect migration to NewsAPI.org and provide developer guidance._
+
 
 
