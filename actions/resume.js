@@ -41,13 +41,27 @@ async function ensureUserExists(userId) {
 
     return user;
   } catch (error) {
-    // If it's a unique constraint error, try to find the user again
-    if (error.code === 'P2002' && error.meta?.target?.includes('clerkUserId')) {
-      const user = await db.user.findUnique({
+    // Handle unique constraint violations (clerkUserId OR email already exists)
+    if (error.code === 'P2002') {
+      const byClerk = await db.user.findUnique({
         where: { clerkUserId: userId },
       });
-      if (user) {
-        return user;
+      if (byClerk) return byClerk;
+
+      const target = error.meta?.target;
+      if (target?.includes('email')) {
+        const { currentUser } = await import("@clerk/nextjs/server");
+        const clerkUser = await currentUser();
+        const email = clerkUser?.emailAddresses[0]?.emailAddress;
+        if (email) {
+          const existing = await db.user.findUnique({ where: { email } });
+          if (existing) {
+            return await db.user.update({
+              where: { email },
+              data: { clerkUserId: userId },
+            });
+          }
+        }
       }
     }
     throw error;

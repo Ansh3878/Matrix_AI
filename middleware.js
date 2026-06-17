@@ -9,8 +9,18 @@ const isProtectedRoute = createRouteMatcher([
   "/onboarding(.*)",
 ]);
 
+// Webhook routes must be public (Clerk calls them without auth)
+const isPublicRoute = createRouteMatcher([
+  "/api/webhooks(.*)",
+]);
 
-export default clerkMiddleware(async(auth,req) => {
+
+export default clerkMiddleware(async(auth,req) =>{
+  // Skip auth for public routes (e.g. Clerk webhooks)
+  if (isPublicRoute(req)) {
+    return NextResponse.next();
+  }
+
   const {userId} = await auth()
   if(!userId && isProtectedRoute(req)){
     const {redirectToSignIn} = await auth()
