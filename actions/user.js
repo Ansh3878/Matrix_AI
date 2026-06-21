@@ -4,72 +4,7 @@ import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { generateAIInsights } from "./dashboard";
-
-// Helper function to ensure user exists in database
-async function ensureUserExists(userId) {
-  try {
-    // First try to find the user
-    let user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
-
-    if (user) {
-      return user;
-    }
-
-    // If user doesn't exist, get Clerk user data and create/upsert
-    const { currentUser } = await import("@clerk/nextjs/server");
-    const clerkUser = await currentUser();
-    
-    if (!clerkUser) {
-      throw new Error("User not found in Clerk");
-    }
-
-    const name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
-    
-    // Use upsert to handle race conditions
-    user = await db.user.upsert({
-      where: { clerkUserId: userId },
-      update: {}, // No updates needed if user already exists
-      create: {
-        clerkUserId: userId,
-        name: name || null,
-        imageUrl: clerkUser.imageUrl,
-        email: clerkUser.emailAddresses[0]?.emailAddress || '',
-      },
-    });
-
-    return user;
-  } catch (error) {
-    // Handle unique constraint violations (clerkUserId OR email already exists)
-    if (error.code === 'P2002') {
-      // Try to find by clerkUserId first
-      const byClerk = await db.user.findUnique({
-        where: { clerkUserId: userId },
-      });
-      if (byClerk) return byClerk;
-
-      // If email was the duplicate field, find by email and link the clerkUserId
-      const target = error.meta?.target;
-      if (target?.includes('email')) {
-        const { currentUser } = await import("@clerk/nextjs/server");
-        const clerkUser = await currentUser();
-        const email = clerkUser?.emailAddresses[0]?.emailAddress;
-        if (email) {
-          // Update the existing user record to link this Clerk ID
-          const existing = await db.user.findUnique({ where: { email } });
-          if (existing) {
-            return await db.user.update({
-              where: { email },
-              data: { clerkUserId: userId },
-            });
-          }
-        }
-      }
-    }
-    throw error;
-  }
-}
+import { ensureUserExists } from "@/lib/user-cache";
 
 export async function updateUser(data) {
   const { userId } = await auth();
@@ -78,7 +13,6 @@ export async function updateUser(data) {
   const user = await ensureUserExists(userId);
 
   try {
-    // Fetch or create industry insights outside of a long-running transaction
     let industryInsight = await db.industryInsight.findUnique({
       where: { industry: data.industry },
     });
@@ -95,7 +29,6 @@ export async function updateUser(data) {
           },
         });
       } catch (error) {
-        // Handle race condition where another request created the record
         if (error.code === "P2002") {
           industryInsight = await db.industryInsight.findUnique({
             where: { industry: data.industry },
@@ -130,10 +63,7 @@ export async function getUserOnboardingStatus() {
 
   try {
     const user = await ensureUserExists(userId);
-
-    return {
-      isOnboarded: !!user?.industry,
-    };
+    return { isOnboarded: !!user?.industry };
   } catch (error) {
     console.error("Error checking onboarding status:", error);
     throw new Error("Failed to check onboarding status");

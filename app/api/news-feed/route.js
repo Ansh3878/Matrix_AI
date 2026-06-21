@@ -16,8 +16,10 @@ export async function GET(request) {
     const q = url.searchParams.get("q") || '(developer OR "software engineer") AND (layoffs OR hiring OR "job market")';
     const pageSizeParam = parseInt(url.searchParams.get("pageSize") || "20", 10);
     const pageSize = Number.isFinite(pageSizeParam) ? Math.min(pageSizeParam, 50) : 20;
+    const pageParam = parseInt(url.searchParams.get("page") || "1", 10);
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
 
-    const apiUrl = `${NEWSAPI_BASE}?q=${encodeURIComponent(q)}&language=en&pageSize=${pageSize}&sortBy=publishedAt`;
+    const apiUrl = `${NEWSAPI_BASE}?q=${encodeURIComponent(q)}&language=en&pageSize=${pageSize}&page=${page}&sortBy=publishedAt`;
 
     const res = await fetch(apiUrl, {
       headers: {

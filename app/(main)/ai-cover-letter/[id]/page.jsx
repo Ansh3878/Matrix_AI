@@ -9,20 +9,21 @@ export default async function EditCoverLetterPage({ params }) {
   const coverLetter = await getCoverLetter(id);
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex flex-col space-y-2">
-        <Link href="/ai-cover-letter">
-          <Button variant="link" className="gap-2 pl-0">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Cover Letters
-          </Button>
-        </Link>
+    <div className="container mx-auto px-4 py-4 max-w-5xl">
+      {/* Back navigation */}
+      <Link href="/ai-cover-letter">
+        <Button variant="link" className="gap-2 pl-0 mb-2">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Cover Letters
+        </Button>
+      </Link>
 
-        <h1 className="text-6xl font-bold gradient-title mb-6">
-          {coverLetter?.jobTitle} at {coverLetter?.companyName}
-        </h1>
-      </div>
+      {/* Title */}
+      <h1 className="text-4xl md:text-6xl font-bold gradient-title mb-2">
+        {coverLetter?.jobTitle} at {coverLetter?.companyName}
+      </h1>
 
+      {/* Editor / Preview */}
       <CoverLetterPreview content={coverLetter?.content} />
     </div>
   );

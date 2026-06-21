@@ -11,7 +11,10 @@ export default function Filters({ initialQuery, onChange }) {
 	const [remote, setRemote] = useState(true);
 	const lastPayload = useRef(null);
 
-	// Debounce search
+	const onChangeRef = useRef(onChange);
+	useEffect(() => { onChangeRef.current = onChange; }); // always sync to latest
+
+	// Debounce search — onChange intentionally excluded from deps via ref
 	useEffect(() => {
 		const payload = { q, location, remote };
 		const t = setTimeout(() => {
@@ -23,10 +26,10 @@ export default function Filters({ initialQuery, onChange }) {
 				prev.remote !== payload.remote;
 			if (!changed) return;
 			lastPayload.current = payload;
-			onChange?.(payload);
+			onChangeRef.current?.(payload);
 		}, 400);
 		return () => clearTimeout(t);
-	}, [q, location, remote, onChange]);
+	}, [q, location, remote]);
 
 	return (
 		<div className="w-full grid grid-cols-1 md:grid-cols-5 gap-3">

@@ -3,69 +3,7 @@
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { getGeminiClient } from "@/lib/gemini";
-
-// Helper function to ensure user exists in database
-async function ensureUserExists(userId) {
-  try {
-    // First try to find the user
-    let user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
-
-    if (user) {
-      return user;
-    }
-
-    // If user doesn't exist, get Clerk user data and create/upsert
-    const { currentUser } = await import("@clerk/nextjs/server");
-    const clerkUser = await currentUser();
-    
-    if (!clerkUser) {
-      throw new Error("User not found in Clerk");
-    }
-
-    const name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
-    
-    // Use upsert to handle race conditions
-    user = await db.user.upsert({
-      where: { clerkUserId: userId },
-      update: {}, // No updates needed if user already exists
-      create: {
-        clerkUserId: userId,
-        name: name || null,
-        imageUrl: clerkUser.imageUrl,
-        email: clerkUser.emailAddresses[0]?.emailAddress || '',
-      },
-    });
-
-    return user;
-  } catch (error) {
-    // Handle unique constraint violations (clerkUserId OR email already exists)
-    if (error.code === 'P2002') {
-      const byClerk = await db.user.findUnique({
-        where: { clerkUserId: userId },
-      });
-      if (byClerk) return byClerk;
-
-      const target = error.meta?.target;
-      if (target?.includes('email')) {
-        const { currentUser } = await import("@clerk/nextjs/server");
-        const clerkUser = await currentUser();
-        const email = clerkUser?.emailAddresses[0]?.emailAddress;
-        if (email) {
-          const existing = await db.user.findUnique({ where: { email } });
-          if (existing) {
-            return await db.user.update({
-              where: { email },
-              data: { clerkUserId: userId },
-            });
-          }
-        }
-      }
-    }
-    throw error;
-  }
-}
+import { ensureUserExists } from "@/lib/user-cache";
 
 export async function generateCoverLetter(data) {
   const { userId } = await auth();
@@ -74,9 +12,7 @@ export async function generateCoverLetter(data) {
   const user = await ensureUserExists(userId);
 
   const prompt = `
-    Write a professional cover letter for a ${data.jobTitle} position at ${
-    data.companyName
-  }.
+    Write a professional cover letter for a ${data.jobTitle} position at ${data.companyName}.
     
     About the candidate:
     - Industry: ${user.industry}
@@ -118,28 +54,6 @@ export async function generateCoverLetter(data) {
     return coverLetter;
   } catch (error) {
     console.error("Error generating cover letter:", error);
-    
-    // Provide more helpful error messages
-    if (error.message?.includes("GEMINI_API_KEY")) {
-      throw new Error(
-        "Gemini API key is not configured. Please set GEMINI_API_KEY in your .env.local file. " +
-        "Get your API key from: https://makersuite.google.com/app/apikey"
-      );
-    }
-    
-    if (error.message?.includes("API_KEY_INVALID") || error.message?.includes("401")) {
-      throw new Error(
-        "Invalid Gemini API key. Please check your GEMINI_API_KEY in .env.local file."
-      );
-    }
-    
-    if (error.message?.includes("404") || error.message?.includes("not found") || error.message?.includes("not supported")) {
-      throw new Error(
-        "Gemini model not found. The model name may be incorrect or not available. " +
-        "Please check the model name in lib/gemini.js. Try using 'gemini-pro' instead."
-      );
-    }
-    
     throw new Error(`Failed to generate cover letter: ${error.message || "Unknown error"}`);
   }
 }
@@ -151,11 +65,16 @@ export async function getCoverLetters() {
   const user = await ensureUserExists(userId);
 
   return await db.coverLetter.findMany({
-    where: {
-      userId: user.id,
-    },
-    orderBy: {
-      createdAt: "desc",
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    // Only fetch fields needed for the list view
+    select: {
+      id: true,
+      companyName: true,
+      jobTitle: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
     },
   });
 }
@@ -167,10 +86,7 @@ export async function getCoverLetter(id) {
   const user = await ensureUserExists(userId);
 
   return await db.coverLetter.findUnique({
-    where: {
-      id,
-      userId: user.id,
-    },
+    where: { id, userId: user.id },
   });
 }
 
@@ -181,9 +97,6 @@ export async function deleteCoverLetter(id) {
   const user = await ensureUserExists(userId);
 
   return await db.coverLetter.delete({
-    where: {
-      id,
-      userId: user.id,
-    },
+    where: { id, userId: user.id },
   });
 }

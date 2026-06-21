@@ -1,4 +1,3 @@
-
 @tailwind base;
 
 @custom-variant dark (&:is(.dark *));
@@ -33,6 +32,7 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -65,10 +65,14 @@
   * {
     @apply border-border;
   }
+
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
-    /* ✅ MOVED FONT-FAMILY RULE HERE */
-    font-family: Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
   }
 }
 
@@ -76,6 +80,7 @@
   .gradient {
     @apply bg-gradient-to-b from-gray-400 via-gray-200 to-gray-600;
   }
+
   .gradient-title {
     @apply gradient font-extrabold tracking-tighter text-transparent bg-clip-text pb-2 pr-2;
   }
@@ -131,7 +136,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; 
+    z-index: -1;
   }
 
   .Background-Beams::before {
@@ -148,21 +153,14 @@
 
 @theme inline {
   --animate-grid: grid 15s linear infinite;
-  @keyframes grid {
-  0% {
-    transform: translateY(-50%);
-    }
-  100% {
-    transform: translateY(0);
-    }
-  }
-}
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
+  @keyframes grid {
+    0% {
+      transform: translateY(-50%);
+    }
+
+    100% {
+      transform: translateY(0);
+    }
   }
 }

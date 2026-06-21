@@ -23,48 +23,62 @@ export async function GET(request) {
 		const jsearchKey = process.env.JSEARCH_API_KEY;
 		const jsearchUrl = new URL("https://jsearch.p.rapidapi.com/search");
 		jsearchUrl.searchParams.set("query", query || "developer");
-		if (location) {
-			jsearchUrl.searchParams.set("page", String(page));
-			jsearchUrl.searchParams.set("location", location);
-		} else {
-			jsearchUrl.searchParams.set("page", String(page));
-		}
+		jsearchUrl.searchParams.set("page", String(page));
+		if (location) jsearchUrl.searchParams.set("location", location);
 		jsearchUrl.searchParams.set("num_pages", "1");
 
-		const remotivePromise = fetch(remotiveUrl.toString(), {
-			next: { revalidate: 0 },
-		});
+		// Fetch both APIs in parallel with a 8s timeout each
+		const timeout = (ms) =>
+			new Promise((_, reject) =>
+				setTimeout(() => reject(new Error("Request timed out")), ms)
+			);
+
+		const remotivePromise = Promise.race([
+			fetch(remotiveUrl.toString(), {
+				next: { revalidate: 300 }, // cache for 5 mins
+			}),
+			timeout(8000),
+		]);
 
 		let jsearchPromise = null;
 		if (jsearchKey) {
-			jsearchPromise = fetch(jsearchUrl.toString(), {
-				method: "GET",
-				headers: {
-					"x-rapidapi-key": jsearchKey,
-					"x-rapidapi-host": "jsearch.p.rapidapi.com",
-				},
-				next: { revalidate: 0 },
-			});
+			jsearchPromise = Promise.race([
+				fetch(jsearchUrl.toString(), {
+					method: "GET",
+					headers: {
+						"x-rapidapi-key": jsearchKey,
+						"x-rapidapi-host": "jsearch.p.rapidapi.com",
+					},
+					next: { revalidate: 300 },
+				}),
+				timeout(8000),
+			]);
 		}
 
 		const [remotiveRes, jsearchRes] = await Promise.all([
 			remotivePromise,
-			jsearchPromise,
+			jsearchPromise ?? Promise.resolve(null),
 		]);
 
 		if (!remotiveRes.ok) {
 			const text = await remotiveRes.text();
 			throw new Error(`Remotive error: ${remotiveRes.status} ${text}`);
 		}
-		if (jsearchRes && !jsearchRes.ok) {
-			const text = await jsearchRes.text();
-			throw new Error(`JSearch error: ${jsearchRes.status} ${text}`);
+
+		// JSearch is optional — if it fails (e.g. 403 no subscription), log and move on
+		let jsearchResJson = { data: [] };
+		if (jsearchRes) {
+			if (!jsearchRes.ok) {
+				const text = await jsearchRes.text();
+				console.warn(`JSearch unavailable (${jsearchRes.status}): ${text}`);
+			} else {
+				jsearchResJson = await jsearchRes.json();
+			}
 		}
 
 		const remotiveData = await remotiveRes.json();
-		const jsearchData = jsearchRes ? await jsearchRes.json() : { data: [] };
 
-		// Normalize Remotive
+		// Normalize Remotive — Remotive is a remote-only board, every job is remote
 		const remotiveJobs = Array.isArray(remotiveData?.jobs)
 			? remotiveData.jobs.map((j) => ({
 					id: `remotive_${j.id}`,
@@ -77,16 +91,13 @@ export async function GET(request) {
 					url: j.url,
 					postedAt: j.publication_date,
 					tags: j.tags || [],
-					isRemote:
-						typeof j?.candidate_required_location === "string"
-							? /remote/i.test(j.candidate_required_location)
-							: true,
+					isRemote: true, // Remotive only lists remote jobs
 			  }))
 			: [];
 
-		// Normalize JSearch
-		const jsearchJobs = Array.isArray(jsearchData?.data)
-			? jsearchData.data.map((j) => ({
+		// Normalize JSearch (empty array when JSearch is unavailable)
+		const jsearchJobs = Array.isArray(jsearchResJson?.data)
+			? jsearchResJson.data.map((j) => ({
 					id: `jsearch_${j.job_id}`,
 					title: j.job_title,
 					company: j.employer_name,
@@ -145,7 +156,11 @@ export async function GET(request) {
 			}),
 			{
 				status: 200,
-				headers: { "content-type": "application/json" },
+				headers: {
+					"content-type": "application/json",
+					// Cache in browser for 2 mins, CDN for 5 mins
+					"Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+				},
 			}
 		);
 	} catch (error) {
@@ -158,5 +173,3 @@ export async function GET(request) {
 		);
 	}
 }
-
-
