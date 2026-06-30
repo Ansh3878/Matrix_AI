@@ -261,17 +261,6 @@ If you see a `500` error about a missing key, ensure `NEWSAPI_KEY` is set in `.e
 
 ---
 
-## Security Checklist
-
-- [ ] `.env` / `.env.local` is listed in `.gitignore` (already configured)
-- [ ] No secret keys committed to the repository
-- [ ] `NEWSAPI_KEY` used only inside a server route, never in client components
-- [ ] Clerk `CLERK_SECRET_KEY` and `CLERK_WEBHOOK_SECRET` are server-only
-- [ ] Incoming Inngest and Clerk webhook payloads are verified (Svix signature validation)
-- [ ] `q` parameter in the news proxy should be length-validated before being forwarded
-
----
-
 ## Contributing
 
 Open an issue to discuss major changes. Send PRs with clear descriptions. Keep secrets out of PR diffs.
